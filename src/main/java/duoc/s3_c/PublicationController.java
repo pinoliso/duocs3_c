@@ -18,6 +18,11 @@ public class PublicationController {
         publications.add(new Publication(1, "Nueva Casa", "Se han comprado una casa los Mesas en Melipilla.", new Date(), List.of(new Comment(1, "Hermosa la casa."), new Comment(2, "Muy Amplia y con buen comedor.")), List.of(4, 5, 3, 1)));
         publications.add(new Publication(2, "Nueva Ley 2342", "Se ha publicado la nueva ley 2342, que habla de.", new Date(), List.of(new Comment(3, "Cuando se aplica la ley?"), new Comment(4, "Sería ideal deja el enlace de la Ley.")), List.of(3, 2, 3, 3)));
         publications.add(new Publication(3, "Aplicación de impuesto a la belleza", "El impuesto a la belleza se impone por la región metropolitana.", new Date(), List.of(new Comment(5, "Que pasa si soy feo?"), new Comment(6, "Se busca referencia de la escala de belleza para catalogar.")), List.of(4, 1, 2)));
+        publications.add(new Publication(4, "Audi A3", "El nuevo modelo que arrasa en ventas.", new Date(), List.of(new Comment(5, "Muy caro"), new Comment(6, "El diseño es espectacular.")), List.of(5, 4, 5, 5, 5)));
+        publications.add(new Publication(5, "Tortillas mexicanas", "Las mejores tortillas mexicanas ya están en Santiago.", new Date(), List.of(new Comment(5, "Muy wenas esas tortillas")), List.of(4, 4, 5)));
+        publications.add(new Publication(6, "Alfajores Dore", "LLego la marca de alfajores que cautivó Europa.", new Date(), List.of(new Comment(5, "Donde puedo conseguir esos alfajores")), List.of(3, 1)));
+        publications.add(new Publication(7, "Terremoto en la Serena", "Se registró un terremoto grado 5 en la Serena.", new Date(), List.of(new Comment(5, "Ni lo senti")), List.of(2, 1, 1, 2, 3)));
+        publications.add(new Publication(8, "Enjambre de Abejas", "Se ha visto un enjambre que azota Concepción.", new Date(), List.of(new Comment(5, "Salimos corriendo")), List.of(4, 4)));
     }
 
     @GetMapping("/publications")
