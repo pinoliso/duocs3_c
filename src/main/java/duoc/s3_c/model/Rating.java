@@ -12,12 +12,12 @@ import jakarta.persistence.JoinColumn;
 
 @Data
 @Entity
-@Table(name = "comments")
-public class Comment {
+@Table(name = "ratings")
+public class Rating {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String text;
+    private int value;
     
     @ManyToOne
     @JoinColumn(name = "publication_id")
