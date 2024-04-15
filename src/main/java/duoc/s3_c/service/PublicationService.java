@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.text.DecimalFormat;
+
+import duoc.s3_c.model.Rating;
 
 @Service
 public class PublicationService {
@@ -38,5 +41,25 @@ public class PublicationService {
 
     public void deletePublication(Long id) {
         publicationRepository.deleteById(id);
+    }
+
+    public Optional<String> getPublicationAverageById(Long id) {
+        Optional<Publication> optionalPublication = publicationRepository.findById(id);
+        if (!optionalPublication.isPresent()) {
+            return Optional.empty();
+        } 
+        
+        Publication publication = optionalPublication.get();
+        int total = 0;
+        List<Rating> ratings = publication.getRatings();
+        for (Rating rating : publication.getRatings()) {
+            total += rating.getValue();
+        }
+        return Optional.of(formatNumber(total / (double) ratings.size()));
+    }
+
+    private String formatNumber(Double number) {
+        DecimalFormat df = new DecimalFormat("0.0");
+        return df.format(number);
     }
 }

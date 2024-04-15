@@ -13,10 +13,7 @@ import duoc.s3_c.service.PublicationService;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Random;
-import java.text.DecimalFormat;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -69,7 +66,8 @@ public class PublicationController {
         try {
             return ResponseEntity.ok(publicationService.getAllPublications());
         } catch (DataAccessException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("Error al acceder a la base de datos"));
+            log.info("Error al acceder a la base de datos");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error al acceder a la base de datos"));
         }
     }
 
@@ -79,53 +77,53 @@ public class PublicationController {
 
         if (id == null || id <= 0) {
             log.info("Error de parámetro");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("El ID de la publicación no es válido"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse("El ID de la publicación no es válido"));
         }
 
-        Optional<Publication> optionalPublication = publicationService.getPublicationById(id);
-        if (!optionalPublication.isPresent()) {
-            log.info("No se encontro el registro " + id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("No se encontró ninguna publicación con el ID proporcionado"));
-            
-        } 
+        try {
+            Optional<Publication> optionalPublication = publicationService.getPublicationById(id);
+            if (!optionalPublication.isPresent()) {
+                log.info("No se encontro el registro " + id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("No se encontró ninguna publicación con el ID proporcionado"));
+                
+            } 
 
-        Publication publication = optionalPublication.get();
-        return ResponseEntity.ok(publication);
+            Publication publication = optionalPublication.get();
+            return ResponseEntity.ok(publication);
+        } catch (DataAccessException e) {
+            log.info("Error al acceder a la base de datos");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error al acceder a la base de datos"));
+        }
     }
 
-    // @GetMapping("/publications/{id}/average_rating")
-    // public Map<String, Object> getAverageRatingByPublicationId(@PathVariable Long id) {
+    @GetMapping("/publications/{id}/average_rating")
+    public ResponseEntity<?> getAverageRatingByPublicationId(@PathVariable Long id) {
 
-    //     Double average = 0.0;
+        if (id == null || id <= 0) {
+            log.info("Error de parámetro");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse("El ID de la publicación no es válido"));
+        }
 
-    //     Optional<Publication> optionalPublication = publicationService.getPublicationById(id);
-    //     for (Publication publication : publications) {
-    //         if (publication.getId() == id) {
-    //             List<Rating> ratings = publication.getRatings();
-    //             int total = 0;
-    //             for(Rating rating: ratings) {
-    //                 total += rating.getValue();
-    //             }
-    //             average = total / (double) ratings.size();
-    //             break;
-    //         }
-    //     }
+        try {
 
-    //     Map<String, Object> response = new HashMap<>();
-    //     response.put("average", formatNumber(average));
-    //     System.out.println("Respondiendo average_rating " + id);
-    //     return response;
-    // }
+            Optional<String> optionalAverage = publicationService.getPublicationAverageById(id);
+            if (!optionalAverage.isPresent()) {
+                log.info("No se encontro el registro " + id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("No se encontró ninguna publicación con el ID proporcionado"));
+                
+            } 
 
-    private String formatNumber(Double number) {
-        DecimalFormat df = new DecimalFormat("0.0");
-        return df.format(number);
+            return ResponseEntity.ok(new MessageResponse("Respondiendo average_rating " + optionalAverage.get()));  
+        } catch (DataAccessException e) {
+            log.info("Error al acceder a la base de datos");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error al acceder a la base de datos"));
+        }
     }
 
-    static class ErrorResponse {
+    static class MessageResponse {
         private final String message;
     
-        public ErrorResponse(String message) {
+        public MessageResponse(String message) {
             this.message = message;
         }
     
