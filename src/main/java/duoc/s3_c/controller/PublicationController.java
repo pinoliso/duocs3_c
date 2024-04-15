@@ -1,6 +1,9 @@
-package duoc.s3_c;
+package duoc.s3_c.controller;
 
 import org.springframework.web.bind.annotation.*;
+
+import duoc.s3_c.model.Comment;
+import duoc.s3_c.model.Publication;
 
 import java.util.ArrayList;
 import java.util.List;

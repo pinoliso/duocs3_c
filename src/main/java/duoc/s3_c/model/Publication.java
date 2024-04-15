@@ -1,4 +1,4 @@
-package duoc.s3_c;
+package duoc.s3_c.model;
 
 import java.util.ArrayList;
 import java.util.List;

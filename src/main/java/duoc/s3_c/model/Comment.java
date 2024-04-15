@@ -1,4 +1,4 @@
-package duoc.s3_c;
+package duoc.s3_c.model;
 
 public class Comment {
     private long id;
