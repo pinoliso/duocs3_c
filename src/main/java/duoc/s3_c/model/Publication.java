@@ -1,6 +1,7 @@
 package duoc.s3_c.model;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -22,11 +23,11 @@ public class Publication {
     private String title;
     private String text;
 
-    @OneToMany(mappedBy = "publication", cascade = CascadeType.ALL)
-    private List<Comment> comments;
+    @OneToMany(mappedBy = "publication", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments  = new ArrayList<>();
     
-    @OneToMany(mappedBy = "publication", cascade = CascadeType.ALL)
-    private List<Rating> ratings;
+    @OneToMany(mappedBy = "publication", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Rating> ratings  = new ArrayList<>();
 
     public List<Comment> getComments() {
         return this.comments;

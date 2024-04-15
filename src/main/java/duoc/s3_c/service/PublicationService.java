@@ -1,6 +1,8 @@
 package duoc.s3_c.service;
 
 import duoc.s3_c.model.Publication;
+import duoc.s3_c.model.Comment;
+import duoc.s3_c.model.Rating;
 import duoc.s3_c.repository.PublicationRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,8 +11,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.text.DecimalFormat;
-
-import duoc.s3_c.model.Rating;
 
 @Service
 public class PublicationService {
@@ -30,12 +30,18 @@ public class PublicationService {
         return publicationRepository.findById(id);
     }
 
-    public Publication updatePublication(Long id, Publication updatedPublication) {
+    public Optional<Publication> updatePublication(Long id, Publication updatedPublication) {
         if (publicationRepository.existsById(id)) {
             updatedPublication.setId(id); 
-            return publicationRepository.save(updatedPublication);
+            for(Comment comment: updatedPublication.getComments()) {
+                comment.setPublication(updatedPublication);
+            }
+            for(Rating rating: updatedPublication.getRatings()) {
+                rating.setPublication(updatedPublication);
+            }
+            return Optional.of(publicationRepository.save(updatedPublication));
         } else {
-            return null; 
+            return Optional.empty();
         }
     }
 

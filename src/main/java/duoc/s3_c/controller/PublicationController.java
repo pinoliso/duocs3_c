@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import jakarta.annotation.PostConstruct;
 
 @RestController
+@RequestMapping("/publications")
 public class PublicationController {
 
     private static final Logger log = LoggerFactory.getLogger(PublicationController.class);
@@ -60,7 +61,7 @@ public class PublicationController {
         }
     }
 
-    @GetMapping("/publications")
+    @GetMapping
     public ResponseEntity<?> getPublications() {
         log.info("GET /publications");
         try {
@@ -71,7 +72,7 @@ public class PublicationController {
         }
     }
 
-    @GetMapping("/publications/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<?> getPublicationById(@PathVariable Long id) {
         log.info("GET /publications/" + id);
 
@@ -96,7 +97,7 @@ public class PublicationController {
         }
     }
 
-    @GetMapping("/publications/{id}/average_rating")
+    @GetMapping("/{id}/average_rating")
     public ResponseEntity<?> getAverageRatingByPublicationId(@PathVariable Long id) {
 
         if (id == null || id <= 0) {
@@ -117,6 +118,65 @@ public class PublicationController {
         } catch (DataAccessException e) {
             log.info("Error al acceder a la base de datos");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error al acceder a la base de datos"));
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createPublication(@RequestBody Publication publication) {
+        try {
+            Publication newPublication = publicationService.createPublication(publication);
+            if (newPublication == null) {
+                log.error("Error al crear el estudiante {}", publication);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse("Error al crear la publicación"));
+            }
+            return ResponseEntity.status(HttpStatus.CREATED).body(newPublication);
+        } catch (Exception e) {
+            log.info("Error al acceder a la base de datos");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error al crear la publicación"));
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updatePublication(@PathVariable Long id, @RequestBody Publication publication) {
+
+        if (id == null || id <= 0) {
+            log.info("Error de parámetro");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse("El ID de la publicación no es válido"));
+        }
+
+        try {
+            Optional<Publication> optionalPublication = publicationService.getPublicationById(id);
+            if (!optionalPublication.isPresent()) {
+                log.info("No se encontro el registro " + id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("No se encontró ninguna publicación con el ID proporcionado"));
+            } 
+
+            return ResponseEntity.ok(publicationService.updatePublication(id, publication));
+        } catch (Exception e) {
+            log.info("Error al acceder a la base de datos");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error al crear la publicación"));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePublication(@PathVariable Long id){
+
+        if (id == null || id <= 0) {
+            log.info("Error de parámetro");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse("El ID de la publicación no es válido"));
+        }
+        
+        try {
+            Optional<Publication> optionalPublication = publicationService.getPublicationById(id);
+            if (!optionalPublication.isPresent()) {
+                log.info("No se encontro el registro " + id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("No se encontró ninguna publicación con el ID proporcionado"));
+            } 
+            publicationService.deletePublication(id);
+            return ResponseEntity.ok(new MessageResponse("Se eliminó exitosamente la publicación " + id));
+        } catch (Exception e) {
+            log.info("Error al acceder a la base de datos");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error al crear la publicación"));
         }
     }
 
