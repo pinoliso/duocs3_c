@@ -23,6 +23,12 @@ public class PublicationService {
     }
 
     public Publication createPublication(Publication publication) {
+        for(Comment comment: publication.getComments()) {
+            comment.setPublication(publication);
+        }
+        for(Rating rating: publication.getRatings()) {
+            rating.setPublication(publication);
+        }
         return publicationRepository.save(publication);
     }
 
