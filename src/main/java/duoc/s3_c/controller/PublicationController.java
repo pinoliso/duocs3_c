@@ -1,75 +1,136 @@
 package duoc.s3_c.controller;
 
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.dao.DataAccessException; 
 
+import duoc.s3_c.model.Rating;
 import duoc.s3_c.model.Comment;
 import duoc.s3_c.model.Publication;
+import duoc.s3_c.service.PublicationService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Date;
+import java.util.Random;
 import java.text.DecimalFormat;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import jakarta.annotation.PostConstruct;
 
 @RestController
 public class PublicationController {
 
-    private ArrayList<Publication> publications = new ArrayList<Publication>();
+    private static final Logger log = LoggerFactory.getLogger(PublicationController.class);
 
-    public PublicationController() {
-        publications.add(new Publication(1, "Nueva Casa", "Se han comprado una casa los Mesas en Melipilla.", new Date(), List.of(new Comment(1, "Hermosa la casa."), new Comment(2, "Muy Amplia y con buen comedor.")), List.of(4, 5, 3, 1)));
-        publications.add(new Publication(2, "Nueva Ley 2342", "Se ha publicado la nueva ley 2342, que habla de.", new Date(), List.of(new Comment(3, "Cuando se aplica la ley?"), new Comment(4, "Sería ideal deja el enlace de la Ley.")), List.of(3, 2, 3, 3)));
-        publications.add(new Publication(3, "Aplicación de impuesto a la belleza", "El impuesto a la belleza se impone por la región metropolitana.", new Date(), List.of(new Comment(5, "Que pasa si soy feo?"), new Comment(6, "Se busca referencia de la escala de belleza para catalogar.")), List.of(4, 1, 2)));
-        publications.add(new Publication(4, "Audi A3", "El nuevo modelo que arrasa en ventas.", new Date(), List.of(new Comment(5, "Muy caro"), new Comment(6, "El diseño es espectacular.")), List.of(5, 4, 5, 5, 5)));
-        publications.add(new Publication(5, "Tortillas mexicanas", "Las mejores tortillas mexicanas ya están en Santiago.", new Date(), List.of(new Comment(5, "Muy wenas esas tortillas")), List.of(4, 4, 5)));
-        publications.add(new Publication(6, "Alfajores Dore", "LLego la marca de alfajores que cautivó Europa.", new Date(), List.of(new Comment(5, "Donde puedo conseguir esos alfajores")), List.of(3, 1)));
-        publications.add(new Publication(7, "Terremoto en la Serena", "Se registró un terremoto grado 5 en la Serena.", new Date(), List.of(new Comment(5, "Ni lo senti")), List.of(2, 1, 1, 2, 3)));
-        publications.add(new Publication(8, "Enjambre de Abejas", "Se ha visto un enjambre que azota Concepción.", new Date(), List.of(new Comment(5, "Salimos corriendo")), List.of(4, 4)));
+    @Autowired
+    private PublicationService publicationService;
+
+    @PostConstruct
+    public void initialize() {
+        for (int i = 1; i <= 10; i++) {
+            Publication publication = new Publication();
+            publication.setTitle("Publicación " + i);
+            publication.setText("Texto publicación " + i);
+            
+            List<Comment> comments = new ArrayList<>();
+            for (int j = 1; j <= 3; j++) {
+                Comment comment = new Comment();
+                comment.setText("Comentario " + j + " para Publicación " + i);
+                comment.setPublication(publication); 
+                comments.add(comment); 
+            }
+            publication.setComments(comments);
+
+            List<Rating> ratings = new ArrayList<>();
+            Random random = new Random();
+            for (int k = 1; k <= 5; k++) {
+                Rating rating = new Rating();
+                rating.setValue(random.nextInt(5) + 1); 
+                rating.setPublication(publication); 
+                ratings.add(rating); 
+            }
+            publication.setRatings(ratings);
+            
+            publicationService.createPublication(publication);
+            
+        }
     }
 
     @GetMapping("/publications")
-    public ArrayList<Publication> getPublications() {
-        System.out.println("Respondiendo publications");
-        return publications;
+    public ResponseEntity<?> getPublications() {
+        log.info("GET /publications");
+        try {
+            return ResponseEntity.ok(publicationService.getAllPublications());
+        } catch (DataAccessException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("Error al acceder a la base de datos"));
+        }
     }
 
     @GetMapping("/publications/{id}")
-    public Publication getPublicationById(@PathVariable Long id) {
-        for (Publication publication : publications) {
-            if (publication.getId() == id) {
-                System.out.println("Respondiendo publications " + id);
-                return publication;
-            }
-        }
-        return null;
-    }
+    public ResponseEntity<?> getPublicationById(@PathVariable Long id) {
+        log.info("GET /publications/" + id);
 
-    @GetMapping("/publications/{id}/average_rating")
-    public Map<String, Object> getAverageRatingByPublicationId(@PathVariable Long id) {
-
-        Double average = 0.0;
-
-        for (Publication publication : publications) {
-            if (publication.getId() == id) {
-                ArrayList<Integer> ratings = publication.getRatings();
-                int total = 0;
-                for(int rating: ratings) {
-                    total += rating;
-                }
-                average = total / (double) ratings.size();
-                break;
-            }
+        if (id == null || id <= 0) {
+            log.info("Error de parámetro");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("El ID de la publicación no es válido"));
         }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("average", formatNumber(average));
-        System.out.println("Respondiendo average_rating " + id);
-        return response;
+        Optional<Publication> optionalPublication = publicationService.getPublicationById(id);
+        if (!optionalPublication.isPresent()) {
+            log.info("No se encontro el registro " + id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("No se encontró ninguna publicación con el ID proporcionado"));
+            
+        } 
+
+        Publication publication = optionalPublication.get();
+        return ResponseEntity.ok(publication);
     }
+
+    // @GetMapping("/publications/{id}/average_rating")
+    // public Map<String, Object> getAverageRatingByPublicationId(@PathVariable Long id) {
+
+    //     Double average = 0.0;
+
+    //     Optional<Publication> optionalPublication = publicationService.getPublicationById(id);
+    //     for (Publication publication : publications) {
+    //         if (publication.getId() == id) {
+    //             List<Rating> ratings = publication.getRatings();
+    //             int total = 0;
+    //             for(Rating rating: ratings) {
+    //                 total += rating.getValue();
+    //             }
+    //             average = total / (double) ratings.size();
+    //             break;
+    //         }
+    //     }
+
+    //     Map<String, Object> response = new HashMap<>();
+    //     response.put("average", formatNumber(average));
+    //     System.out.println("Respondiendo average_rating " + id);
+    //     return response;
+    // }
 
     private String formatNumber(Double number) {
         DecimalFormat df = new DecimalFormat("0.0");
         return df.format(number);
+    }
+
+    static class ErrorResponse {
+        private final String message;
+    
+        public ErrorResponse(String message) {
+            this.message = message;
+        }
+    
+        public String getMessage() {
+            return message;
+        }
     }
 }
