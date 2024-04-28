@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
-import org.springframework.dao.DataAccessException; 
+import org.springframework.dao.DataAccessException;
 
 import duoc.s3_c.model.Rating;
 import duoc.s3_c.model.Comment;
@@ -14,10 +14,15 @@ import duoc.s3_c.service.PublicationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 
 import jakarta.annotation.PostConstruct;
 
@@ -64,12 +69,18 @@ public class PublicationController {
     @GetMapping
     public ResponseEntity<?> getPublications() {
         log.info("GET /publications");
-        try {
-            return ResponseEntity.ok(publicationService.getAllPublications());
-        } catch (DataAccessException e) {
-            log.info("Error al acceder a la base de datos");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error al acceder a la base de datos"));
-        }
+        
+        List<EntityModel<Publication>> publications = publicationService.getAllPublications().stream()
+            .map(publication -> EntityModel.of(publication,
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getPublicationById(publication.getId())).withSelfRel(),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getAverageRatingByPublicationId(publication.getId())).withRel("average_rating")
+            )).collect(Collectors.toList());
+
+        CollectionModel<EntityModel<Publication>> collection = CollectionModel.of(publications, 
+            WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getPublications()).withRel("publications")
+        );
+
+        return ResponseEntity.ok(collection);
     }
 
     @GetMapping("/{id}")
@@ -86,11 +97,14 @@ public class PublicationController {
             if (!optionalPublication.isPresent()) {
                 log.info("No se encontro el registro " + id);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("No se encontró ninguna publicación con el ID proporcionado"));
-                
             } 
 
-            Publication publication = optionalPublication.get();
-            return ResponseEntity.ok(publication);
+            EntityModel<Publication> publication = EntityModel.of(optionalPublication.get(),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getPublicationById(id)).withSelfRel(),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getPublications()).withRel("all-publications"),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getAverageRatingByPublicationId(id)).withRel("average_rating")
+            );
+            return  ResponseEntity.ok(publication);
         } catch (DataAccessException e) {
             log.info("Error al acceder a la base de datos");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error al acceder a la base de datos"));
@@ -129,7 +143,13 @@ public class PublicationController {
                 log.error("Error al crear el estudiante {}", publication);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse("Error al crear la publicación"));
             }
-            return ResponseEntity.status(HttpStatus.CREATED).body(newPublication);
+            
+            EntityModel<Publication> publicationEntity = EntityModel.of(newPublication,
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getPublicationById(newPublication.getId())).withSelfRel(),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getPublications()).withRel("all-publications"),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getAverageRatingByPublicationId(newPublication.getId())).withRel("average_rating")
+            );
+            return ResponseEntity.status(HttpStatus.CREATED).body(publicationEntity);
         } catch (Exception e) {
             log.info("Error al acceder a la base de datos");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error al crear la publicación"));
@@ -145,13 +165,18 @@ public class PublicationController {
         }
 
         try {
-            Optional<Publication> optionalPublication = publicationService.getPublicationById(id);
+            Optional<Publication> optionalPublication = publicationService.updatePublication(id, publication);
             if (!optionalPublication.isPresent()) {
                 log.info("No se encontro el registro " + id);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("No se encontró ninguna publicación con el ID proporcionado"));
             } 
 
-            return ResponseEntity.ok(publicationService.updatePublication(id, publication));
+            EntityModel<Publication> publicationEntity = EntityModel.of(optionalPublication.get(),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getPublicationById(optionalPublication.get().getId())).withSelfRel(),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getPublications()).withRel("all-publications"),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getAverageRatingByPublicationId(optionalPublication.get().getId())).withRel("average_rating")
+            );
+            return ResponseEntity.ok(publicationEntity);
         } catch (Exception e) {
             log.info("Error al acceder a la base de datos");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error al crear la publicación"));
