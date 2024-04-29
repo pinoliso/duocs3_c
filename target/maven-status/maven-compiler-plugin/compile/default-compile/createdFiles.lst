@@ -1,0 +1,13 @@
+duoc\s3_c\service\PublicationService.class
+duoc\s3_c\controller\PublicationController$MessageResponse.class
+duoc\s3_c\exception\PublicationNotFoundException.class
+duoc\s3_c\model\Publication.class
+duoc\s3_c\repository\PublicationRepository.class
+duoc\s3_c\model\Rating.class
+duoc\s3_c\model\Comment.class
+duoc\s3_c\repository\CommentRepository.class
+duoc\s3_c\service\CommentService.class
+duoc\s3_c\service\RatingService.class
+duoc\s3_c\S3CApplication.class
+duoc\s3_c\controller\PublicationController.class
+duoc\s3_c\repository\RatingRepository.class
