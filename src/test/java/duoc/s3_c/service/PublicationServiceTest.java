@@ -11,7 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.mockito.ArgumentMatchers.any;
-import java.util.Optional;
 
 import duoc.s3_c.model.Publication;
 import duoc.s3_c.repository.PublicationRepository;
